@@ -51,6 +51,3 @@ ShiftSync/
 - Add backend integration for real-time employee responses.
 - Implement authentication for supervisors and employees.
 - Enhance the UI with additional features like notifications and detailed analytics.
-
-## License
-This project is for educational purposes only and is not intended for production use.
