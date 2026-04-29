@@ -41,9 +41,8 @@ ShiftSync/
 5. **Request More Employees**: If coverage is still incomplete, request additional employees.
 
 ## Team Members
-- Bryan Dominguez
-- Shreyas Katkoor
 - Aditya Lnu
+- Shreyas Katkoor
 
 ## Known Issues
 - None reported.
