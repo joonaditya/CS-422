@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShiftSync – Supervisor Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 1: Dashboard
+  ════════════════════════════════════════════ -->
+  <div id="screen-dashboard" class="screen">
+
+    <!-- Professional header -->
+    <div class="dash-header">
+      <div class="dash-brand">
+        <div class="brand-mark">SS</div>
+        <div class="brand-text">
+          <div class="brand-name">ShiftSync</div>
+          <div class="brand-sub">Supervisor Portal</div>
+        </div>
+      </div>
+      <div class="dash-right">
+        <div class="dash-date" id="dash-date"></div>
+        <div class="user-chip">
+          <div class="user-avatar-sm">JS</div>
+          <span class="user-name">Jordan S.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    <div id="dashboard-alert" class="banner banner-critical">
+      <span class="banner-icon">⚠️</span>
+      <div class="banner-body">
+        <div class="banner-title">Checkout Department Needs Coverage</div>
+        <div class="banner-sub">2 employees needed immediately</div>
+      </div>
+    </div>
+
+    <div id="dashboard-pending" class="banner banner-warning hidden">
+      <span class="banner-icon">📋</span>
+      <div class="banner-body">
+        <div class="banner-title">Coverage Request Pending</div>
+        <div class="banner-sub">Waiting for employee responses — Checkout</div>
+      </div>
+    </div>
+
+    <div id="dashboard-secured" class="banner banner-success hidden">
+      <span class="banner-icon">✅</span>
+      <div class="banner-body">
+        <div class="banner-title">Coverage Secured!</div>
+        <div class="banner-sub">Checkout is now fully staffed</div>
+      </div>
+    </div>
+
+    <div id="dashboard-incomplete" class="banner banner-critical hidden">
+      <span class="banner-icon">❗</span>
+      <div class="banner-body">
+        <div class="banner-title">Coverage Incomplete</div>
+        <div class="banner-sub">An employee declined — Checkout still needs more staff</div>
+      </div>
+    </div>
+
+    <!-- KPI stat cards -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-icon-wrap" style="background:#EFF6FF">👥</div>
+        <div class="stat-body">
+          <div class="stat-val" id="stat-duty">6</div>
+          <div class="stat-lbl">Staff On Duty</div>
+        </div>
+      </div>
+      <div class="stat-card stat-alert" id="stat-card-open">
+        <div class="stat-icon-wrap" style="background:#FEE2E2">⚠️</div>
+        <div class="stat-body">
+          <div class="stat-val" id="stat-open">2</div>
+          <div class="stat-lbl">Open Positions</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon-wrap" style="background:#FEF3C7">📨</div>
+        <div class="stat-body">
+          <div class="stat-val" id="stat-requests">0</div>
+          <div class="stat-lbl">Requests Sent</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon-wrap" style="background:#DCFCE7">📊</div>
+        <div class="stat-body">
+          <div class="stat-val" id="stat-coverage">75%</div>
+          <div class="stat-lbl">Coverage Rate</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action panels -->
+    <div id="suggested-action" class="suggested-panel">
+      <div class="suggested-hint">Tap below to find available employees</div>
+      <button class="btn btn-primary btn-full" onclick="showView('details')">
+        View Available Employees ›
+      </button>
+    </div>
+
+    <div id="pending-action" class="suggested-panel hidden">
+      <div class="suggested-hint">Check if your employees have responded</div>
+      <button class="btn btn-primary btn-full" onclick="openResponsesScreen()">
+        Check Employee Responses ›
+      </button>
+    </div>
+
+    <div id="request-more-action" class="suggested-panel suggested-panel-warn hidden">
+      <div class="suggested-hint">Request additional employees to fill the remaining gap</div>
+      <button class="btn btn-primary btn-full" onclick="requestMoreEmployees()">
+        Request More Employees ›
+      </button>
+    </div>
+
+    <!-- Charts row -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header">Department Coverage</div>
+        <div class="chart-wrap"><canvas id="chart-dept"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header">Staffing This Week</div>
+        <div class="chart-wrap"><canvas id="chart-weekly"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Department status + today's shifts -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header">Department Status</div>
+
+        <div id="dept-checkout" class="dept dept-understaffed">
+          <span class="dept-icon">🔴</span>
+          <div class="dept-info">
+            <div class="dept-name">Checkout</div>
+            <div class="dept-status">UNDERSTAFFED – 2 missing</div>
+          </div>
+        </div>
+
+        <div class="dept dept-staffed">
+          <span class="dept-icon">🟢</span>
+          <div class="dept-info">
+            <div class="dept-name">Grocery</div>
+            <div class="dept-status">Fully Staffed</div>
+          </div>
+        </div>
+
+        <div class="dept dept-staffed">
+          <span class="dept-icon">🟢</span>
+          <div class="dept-info">
+            <div class="dept-name">Electronics</div>
+            <div class="dept-status">Fully Staffed</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Today's Shifts</div>
+        <table class="shift-table">
+          <thead>
+            <tr><th>Dept</th><th>Employee</th><th>Time</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Checkout</td><td>Alex Martinez</td><td>3–5 PM</td>
+              <td><span class="shift-badge shift-duty">On Duty</span></td>
+            </tr>
+            <tr>
+              <td>Checkout</td><td>Sam Johnson</td><td>3–5 PM</td>
+              <td><span class="shift-badge shift-duty">On Duty</span></td>
+            </tr>
+            <tr id="shift-open-1">
+              <td>Checkout</td>
+              <td class="shift-emp open-slot">Open</td>
+              <td>3–5 PM</td>
+              <td class="shift-status"><span class="shift-badge shift-open">Needed</span></td>
+            </tr>
+            <tr id="shift-open-2">
+              <td>Checkout</td>
+              <td class="shift-emp open-slot">Open</td>
+              <td>3–5 PM</td>
+              <td class="shift-status"><span class="shift-badge shift-open">Needed</span></td>
+            </tr>
+            <tr>
+              <td>Grocery</td><td>Mike Torres</td><td>1–6 PM</td>
+              <td><span class="shift-badge shift-duty">On Duty</span></td>
+            </tr>
+            <tr>
+              <td>Grocery</td><td>Jamie Lee</td><td>1–6 PM</td>
+              <td><span class="shift-badge shift-duty">On Duty</span></td>
+            </tr>
+            <tr>
+              <td>Electronics</td><td>Sara Kim</td><td>2–6 PM</td>
+              <td><span class="shift-badge shift-duty">On Duty</span></td>
+            </tr>
+            <tr>
+              <td>Electronics</td><td>Chris Park</td><td>2–6 PM</td>
+              <td><span class="shift-badge shift-duty">On Duty</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Quick-glance info -->
+    <div class="card">
+      <div class="meta-row">
+        <span class="meta-label">🕐 Next Shift Change</span>
+        <span class="meta-value">5:00 PM</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">👥 Available Employees</span>
+        <span class="meta-value" id="meta-available">3</span>
+      </div>
+    </div>
+
+    <button class="btn btn-outline btn-full" onclick="refreshStatus(this)">
+      🔄 Refresh Status
+    </button>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 2: Checkout Department Details
+       Shows current staff + suggested employees
+       with clear eligibility labels (GR3 fix).
+  ════════════════════════════════════════════ -->
+  <div id="screen-details" class="screen hidden">
+
+    <div class="nav-bar">
+      <button class="back-btn" onclick="showView('dashboard')">&#8592; Back</button>
+      <div class="nav-title">Checkout Department</div>
+    </div>
+
+    <div class="banner banner-critical">
+      <span class="banner-icon">⚠️</span>
+      <div class="banner-body">
+        <div class="banner-title">2 Employees Needed</div>
+        <div class="banner-sub">Checkout is critically understaffed right now</div>
+      </div>
+    </div>
+
+    <!-- Current staff -->
+    <div class="card">
+      <div class="card-header">Current Staff</div>
+
+      <div class="staff-row">
+        <div class="avatar">A</div>
+        <div class="staff-details">
+          <div class="staff-name">Alex Martinez</div>
+          <div class="staff-role">Cashier</div>
+        </div>
+        <span class="badge badge-duty">On Duty</span>
+      </div>
+
+      <div class="staff-row">
+        <div class="avatar">S</div>
+        <div class="staff-details">
+          <div class="staff-name">Sam Johnson</div>
+          <div class="staff-role">Cashier</div>
+        </div>
+        <span class="badge badge-duty">On Duty</span>
+      </div>
+
+      <div class="gap-label">⚠ 2 positions currently unfilled</div>
+    </div>
+
+    <!-- Suggested employees with clear trained/available status -->
+    <div class="card">
+      <div class="card-header">Suggested Employees</div>
+      <div class="card-hint">Trained &amp; available to cover Checkout</div>
+
+      <div class="emp-row emp-eligible">
+        <div class="avatar">J</div>
+        <div class="emp-details">
+          <div class="emp-name">John Doe</div>
+          <div class="tag-row">
+            <span class="tag tag-trained">✓ Trained</span>
+            <span class="tag tag-available">✓ Available</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="emp-row emp-eligible">
+        <div class="avatar">M</div>
+        <div class="emp-details">
+          <div class="emp-name">Maria Santos</div>
+          <div class="tag-row">
+            <span class="tag tag-trained">✓ Trained</span>
+            <span class="tag tag-available">✓ Available</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="emp-row emp-eligible">
+        <div class="avatar">L</div>
+        <div class="emp-details">
+          <div class="emp-name">Lisa Chen</div>
+          <div class="tag-row">
+            <span class="tag tag-trained">✓ Trained</span>
+            <span class="tag tag-available">✓ Available</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ineligible employee — visually dimmed, clearly labelled -->
+      <div class="emp-row emp-ineligible">
+        <div class="avatar avatar-dim">K</div>
+        <div class="emp-details">
+          <div class="emp-name">Kevin Patel</div>
+          <div class="tag-row">
+            <span class="tag tag-untrained">✗ Not Trained</span>
+            <span class="tag tag-available">✓ Available</span>
+          </div>
+        </div>
+        <span class="ineligible-badge">Ineligible</span>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="showView('select')">
+      Select Employees ›
+    </button>
+    <button class="btn btn-ghost btn-full" onclick="showView('dashboard')">Cancel</button>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 3: Select Employees
+       GR3 Iteration 2 fix: Kevin is locked/disabled
+       so supervisors cannot accidentally select an
+       untrained employee (error prevention).
+  ════════════════════════════════════════════ -->
+  <div id="screen-select" class="screen hidden">
+
+    <div class="nav-bar">
+      <button class="back-btn" onclick="showView('details')">&#8592; Back</button>
+      <div class="nav-title">
+        Select Employees
+        <div class="nav-sub">Dept: Checkout</div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <span class="info-icon">ℹ️</span>
+      <p>Select trained and available employees to cover the understaffed Checkout department.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Available Employees</div>
+
+      <!-- Eligible: John Doe -->
+      <label class="sel-item" id="sel-john">
+        <input type="checkbox" value="John Doe" onchange="updateSelection()">
+        <div class="avatar">J</div>
+        <div class="emp-details">
+          <div class="emp-name">John Doe</div>
+          <div class="tag-row">
+            <span class="tag tag-trained">✓ Trained</span>
+            <span class="tag tag-available">✓ Available</span>
+          </div>
+        </div>
+        <span class="chk-indicator" aria-hidden="true">☐</span>
+      </label>
+
+      <!-- Eligible: Maria Santos -->
+      <label class="sel-item" id="sel-maria">
+        <input type="checkbox" value="Maria Santos" onchange="updateSelection()">
+        <div class="avatar">M</div>
+        <div class="emp-details">
+          <div class="emp-name">Maria Santos</div>
+          <div class="tag-row">
+            <span class="tag tag-trained">✓ Trained</span>
+            <span class="tag tag-available">✓ Available</span>
+          </div>
+        </div>
+        <span class="chk-indicator" aria-hidden="true">☐</span>
+      </label>
+
+      <!-- Eligible: Lisa Chen -->
+      <label class="sel-item" id="sel-lisa">
+        <input type="checkbox" value="Lisa Chen" onchange="updateSelection()">
+        <div class="avatar">L</div>
+        <div class="emp-details">
+          <div class="emp-name">Lisa Chen</div>
+          <div class="tag-row">
+            <span class="tag tag-trained">✓ Trained</span>
+            <span class="tag tag-available">✓ Available</span>
+          </div>
+        </div>
+        <span class="chk-indicator" aria-hidden="true">☐</span>
+      </label>
+
+      <!-- Ineligible: Kevin Patel — locked, cannot be selected -->
+      <div class="sel-item sel-disabled" aria-disabled="true">
+        <span class="lock-icon">🔒</span>
+        <div class="avatar avatar-dim">K</div>
+        <div class="emp-details">
+          <div class="emp-name">Kevin Patel</div>
+          <div class="tag-row">
+            <span class="tag tag-untrained">✗ Not Trained</span>
+            <span class="tag tag-available">✓ Available</span>
+          </div>
+        </div>
+        <span class="cannot-sel">Cannot Select</span>
+      </div>
+    </div>
+
+    <!-- Live count of selected employees -->
+    <div id="sel-count-box" class="sel-count-box hidden">
+      <span id="sel-count-text">0 employees selected</span>
+    </div>
+
+    <button id="send-btn" class="btn btn-primary btn-full" onclick="showView('confirm')" disabled>
+      ✓ Send Request
+    </button>
+    <button class="btn btn-ghost btn-full" onclick="showView('dashboard')">Cancel</button>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 4: Confirm Request
+       Safety design from GR2 — require supervisor
+       to review a summary before committing.
+  ════════════════════════════════════════════ -->
+  <div id="screen-confirm" class="screen hidden">
+
+    <div class="nav-bar">
+      <button class="back-btn" onclick="showView('select')">&#8592; Back</button>
+      <div class="nav-title">Confirm Request</div>
+    </div>
+
+    <div class="card">
+      <div class="confirm-label-group">Request Summary</div>
+      <div class="confirm-row">
+        <span class="confirm-key">Department</span>
+        <span class="confirm-val">Checkout</span>
+      </div>
+      <div class="confirm-row">
+        <span class="confirm-key">Employees</span>
+        <span id="confirm-employees" class="confirm-val"></span>
+      </div>
+      <div class="confirm-row">
+        <span class="confirm-key">Shift Time</span>
+        <span class="confirm-val">3:00 PM – 5:00 PM</span>
+      </div>
+      <div class="confirm-row">
+        <span class="confirm-key">Positions Needed</span>
+        <span class="confirm-val">2</span>
+      </div>
+    </div>
+
+    <div class="notice-box">
+      <span>📨</span>
+      <p>A coverage request will be sent immediately to the selected employees via the app.</p>
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="confirmRequest()">
+      ✓ Confirm Request
+    </button>
+    <button class="btn btn-ghost btn-full" onclick="showView('dashboard')">Cancel</button>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 5: Request Sent — Success
+       GR3 fix: prominent success state so
+       supervisors are certain the request went out.
+  ════════════════════════════════════════════ -->
+  <div id="screen-success" class="screen hidden">
+
+    <div class="success-hero">
+      <div class="success-emoji">✅</div>
+      <h2 class="success-heading">Request Sent!</h2>
+      <p class="success-body">Coverage request sent successfully for the <strong>Checkout Department</strong>.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Employees Notified</div>
+      <div id="notified-list"></div>
+    </div>
+
+    <div class="info-box">
+      <span class="info-icon">ℹ️</span>
+      <p>The dashboard will update automatically when employees accept or decline your request.</p>
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="returnToDashboard()">
+      Return to Dashboard
+    </button>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════
+       SCREEN 6: Employee Responses
+       Simulates the employee side of the app —
+       supervisor sees accept/decline in real time
+       (GR2 Design 3, Coverage Update flow).
+  ════════════════════════════════════════════ -->
+  <div id="screen-responses" class="screen hidden">
+
+    <div class="nav-bar">
+      <button class="back-btn" onclick="returnToDashboard()">&#8592; Back</button>
+      <div class="nav-title">
+        Employee Responses
+        <div class="nav-sub">Dept: Checkout</div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <span class="info-icon">📱</span>
+      <p>This simulates how employees respond from their own devices. Tap <strong>Accept</strong> or <strong>Decline</strong> for each employee to see the dashboard update.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Pending Responses</div>
+      <div id="response-list"></div>
+    </div>
+
+    <div id="coverage-secured-box" class="result-notice result-success hidden">
+      <span>✅</span>
+      <p><strong>Coverage Secured!</strong> Enough employees accepted. Return to the dashboard to see the updated status.</p>
+    </div>
+
+    <div id="coverage-short-box" class="result-notice result-warn hidden">
+      <span>⚠️</span>
+      <p><strong>Not enough coverage.</strong> Return to the dashboard and send requests to more employees.</p>
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="returnToDashboard()">
+      Return to Dashboard
+    </button>
+  </div>
+
+</div><!-- /.app-wrapper -->
+
+<script src="script.js"></script>
+</body>
+</html>
