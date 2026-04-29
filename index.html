@@ -226,6 +226,58 @@
     <button class="btn btn-outline btn-full" onclick="refreshStatus(this)">
       🔄 Refresh Status
     </button>
+
+    <!-- Add Vacancy Button -->
+    <button class="btn btn-secondary btn-full" onclick="openVacancyModal()">
+      ➕ Add Vacancy
+    </button>
+  </div>
+
+  <!-- Vacancy Modal -->
+  <div id="vacancy-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add New Vacancy</h3>
+        <button class="modal-close" onclick="closeVacancyModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="vacancy-department">Department</label>
+          <select id="vacancy-department">
+            <option value="Checkout">Checkout</option>
+            <option value="Grocery">Grocery</option>
+            <option value="Electronics">Electronics</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="vacancy-position">Position</label>
+          <input type="text" id="vacancy-position" placeholder="e.g., Cashier, Stocker">
+        </div>
+        <div class="form-group">
+          <label for="vacancy-shifts">Number of Positions</label>
+          <input type="number" id="vacancy-shifts" min="1" value="1">
+        </div>
+        <div class="form-group">
+          <label for="vacancy-time">Shift Time</label>
+          <select id="vacancy-time">
+            <option value="9 AM - 1 PM">9 AM - 1 PM</option>
+            <option value="1 PM - 5 PM">1 PM - 5 PM</option>
+            <option value="3 PM - 7 PM">3 PM - 7 PM</option>
+            <option value="5 PM - 9 PM">5 PM - 9 PM</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeVacancyModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="addVacancy()">Add Vacancy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vacancies List -->
+  <div id="vacancies-section" class="card hidden">
+    <div class="card-header">Upcoming Vacancies</div>
+    <div id="vacancies-list"></div>
   </div>
 
 

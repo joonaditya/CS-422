@@ -1,6 +1,6 @@
 // ShiftSync – Supervisor Staffing App
 // CS 422 Group Project 5
-// Authors: Bryan Dominguez, Shreyas Katkoor, Aditya Lnu
+// Authors: Shreyas Katkoor, Aditya Lnu
 
 const NEEDED = 2; // positions that must be filled in Checkout
 
@@ -12,6 +12,7 @@ const state = {
   coverageShort:      false,  // all responded but not enough accepted
   employeeResponses:  {},     // { name: 'accepted' | 'declined' }
   acceptedCount:      0,
+  vacancies:           [],   // user-added vacancies
 };
 
 // ── Screen Navigation ──────────────────────────────────────────
@@ -451,6 +452,94 @@ function updateDashboardStats() {
   // Available employees = eligible pool minus those already committed or requested
   const totalOut = Math.max(state.committedEmployees.length, state.selectedEmployees.length);
   set('meta-available', Math.max(0, 3 - totalOut));
+
+  // Update vacancy section visibility
+  const vacancySection = document.getElementById('vacancies-section');
+  if (vacancySection) {
+    if (state.vacancies.length > 0) {
+      vacancySection.classList.remove('hidden');
+      renderVacancies();
+    } else {
+      vacancySection.classList.add('hidden');
+    }
+  }
+}
+
+// ── Vacancy Management ─────────────────────────────────────────
+
+function openVacancyModal() {
+  document.getElementById('vacancy-modal').classList.remove('hidden');
+}
+
+function closeVacancyModal() {
+  document.getElementById('vacancy-modal').classList.add('hidden');
+  // Clear form
+  document.getElementById('vacancy-department').value = 'Checkout';
+  document.getElementById('vacancy-position').value = '';
+  document.getElementById('vacancy-shifts').value = '1';
+  document.getElementById('vacancy-time').value = '3 PM - 7 PM';
+}
+
+function addVacancy() {
+  const department = document.getElementById('vacancy-department').value;
+  const position = document.getElementById('vacancy-position').value.trim();
+  const shifts = parseInt(document.getElementById('vacancy-shifts').value) || 1;
+  const time = document.getElementById('vacancy-time').value;
+
+  if (!position) {
+    alert('Please enter a position name');
+    return;
+  }
+
+  const vacancy = {
+    id: Date.now(),
+    department,
+    position,
+    shifts,
+    time,
+    filled: 0,
+  };
+
+  state.vacancies.push(vacancy);
+  closeVacancyModal();
+  updateDashboardStats();
+}
+
+function renderVacancies() {
+  const list = document.getElementById('vacancies-list');
+  if (!list) return;
+
+  list.innerHTML = state.vacancies.map(v => `
+    <div class="vacancy-item">
+      <div class="vacancy-info">
+        <div class="vacancy-dept">${v.department} - ${v.position}</div>
+        <div class="vacancy-details">${v.shifts} position(s) • ${v.time}</div>
+      </div>
+      <div class="vacancy-actions">
+        <button class="btn btn-primary btn-small" onclick="hireForVacancy(${v.id})">
+          Hire
+        </button>
+        <button class="btn btn-ghost btn-small" onclick="deleteVacancy(${v.id})">
+          ×
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function hireForVacancy(id) {
+  // Navigate to employee selection for this vacancy
+  const vacancy = state.vacancies.find(v => v.id === id);
+  if (vacancy) {
+    // Set the NEEDED to the vacancy's shifts
+    window.currentVacancy = vacancy;
+    showView('select');
+  }
+}
+
+function deleteVacancy(id) {
+  state.vacancies = state.vacancies.filter(v => v.id !== id);
+  updateDashboardStats();
 }
 
 document.addEventListener('DOMContentLoaded', initDashboard);
